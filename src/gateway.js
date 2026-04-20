@@ -1,6 +1,14 @@
 import { EventEmitter } from 'node:events';
 import { createMessage } from './normalized-message.js';
 
+const BUILTIN_ADAPTERS = {
+  telegram: () => import('./adapters/telegram.js').then((m) => m.createTelegramAdapter),
+  slack: () => import('./adapters/slack.js').then((m) => m.createSlackAdapter),
+  email: () => import('./adapters/email.js').then((m) => m.createEmailAdapter),
+  sms: () => import('./adapters/sms.js').then((m) => m.createSmsAdapter),
+  discord: () => import('./adapters/discord.js').then((m) => m.createDiscordAdapter),
+};
+
 export class Gateway extends EventEmitter {
   constructor(config = {}) {
     super();
@@ -14,6 +22,13 @@ export class Gateway extends EventEmitter {
   }
 
   async start() {
+    for (const channel of Object.keys(this._config)) {
+      if (!this._adapterFactories.has(channel) && BUILTIN_ADAPTERS[channel]) {
+        const createFn = await BUILTIN_ADAPTERS[channel]();
+        this._adapterFactories.set(channel, (cfg) => createFn(cfg));
+      }
+    }
+
     for (const [channel, factory] of this._adapterFactories) {
       if (!this._config[channel]) continue;
       try {
