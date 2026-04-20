@@ -1,0 +1,45 @@
+{
+  "name": "@omnichannel/gateway",
+  "version": "0.1.0",
+  "description": "Unified messaging gateway — one API for Telegram, Slack, Email, SMS, Discord",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest --watch"
+  },
+  "keywords": ["chatbot", "telegram", "slack", "discord", "email", "sms", "messaging", "omnichannel", "ai", "agent"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "node-telegram-bot-api": ">=0.60.0",
+    "@slack/bolt": ">=4.0.0",
+    "nodemailer": ">=6.0.0",
+    "imapflow": ">=1.0.0",
+    "twilio": ">=5.0.0",
+    "discord.js": ">=14.0.0"
+  },
+  "peerDependenciesMeta": {
+    "node-telegram-bot-api": { "optional": true },
+    "@slack/bolt": { "optional": true },
+    "nodemailer": { "optional": true },
+    "imapflow": { "optional": true },
+    "twilio": { "optional": true },
+    "discord.js": { "optional": true }
+  },
+  "devDependencies": {
+    "vitest": "^3.1.0",
+    "node-telegram-bot-api": "^0.67.0",
+    "@slack/bolt": "^4.6.0",
+    "nodemailer": "^6.9.0",
+    "imapflow": "^1.0.0",
+    "twilio": "^5.12.0",
+    "discord.js": "^14.25.0"
+  }
+}
