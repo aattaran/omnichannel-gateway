@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>@omnichannel/gateway - Configuration Simulator</title>
+<style>
+/* ─── Reset & Base ─────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary:   #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary:  #21262d;
+  --bg-card:      #1c2129;
+  --border:       #30363d;
+  --border-focus: #58a6ff;
+  --text-primary: #e6edf3;
+  --text-secondary:#8b949e;
+  --text-muted:   #484f58;
+  --accent:       #58a6ff;
+  --accent-dim:   #1f6feb;
+  --green:        #3fb950;
+  --green-dim:    #238636;
+  --red:          #f85149;
+  --orange:       #d29922;
+  --purple:       #bc8cff;
+  --cyan:         #79c0ff;
+  --font-sans:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono:    'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+  --radius:       8px;
+  --radius-lg:    12px;
+}
+
+html { font-size: 15px; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ─── Layout ───────────────────────────────────────── */
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+header p {
+  color: var(--text-secondary);
+  margin-top: 0.4rem;
+  font-size: 0.95rem;
+}
+
+.version-badge {
+  display: inline-block;
+  margin-top: 0.6rem;
+  padding: 0.15rem 0.6rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+section { margin-bottom: 2.5rem; }
+
+section > h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+section > h2 .section-icon {
+  font-size: 1.1rem;
+}
+
+/* ─── Channel Cards ────────────────────────────────── */
+.channels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.channel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  transition: border-color 0.2s;
+}
+
+.channel-card.active { border-color: var(--accent-dim); }
+
+.channel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.channel-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.channel-icon { font-size: 1.5rem; }
+
+.channel-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+/* Toggle Switch */
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.toggle input:checked + .toggle-slider {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: #fff;
+}
+
+/* Credential Fields */
+.channel-fields {
+  display: none;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.channel-card.active .channel-fields { display: flex; }
+
+.field-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-group input {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.field-group input::placeholder { color: var(--text-muted); }
+.field-group input:focus { border-color: var(--border-focus); }
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+/* ─── Code Preview ─────────────────────────────────── */
+.code-section {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.code-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-toolbar span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.btn-copy {
+  padding: 0.3rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+
+.btn-copy:hover { color: var(--text-primary); border-color: var(--accent); }
+.btn-copy.copied { color: var(--green); border-color: var(--green); }
+
+.code-block {
+  padding: 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  white-space: pre;
+  tab-size: 2;
+  color: var(--text-primary);
+}
+
+/* Syntax Highlighting */
+.syn-kw   { color: #ff7b72; }
+.syn-str  { color: #a5d6ff; }
+.syn-fn   { color: #d2a8ff; }
+.syn-obj  { color: #79c0ff; }
+.syn-cmt  { color: #484f58; font-style: italic; }
+.syn-prop { color: #7ee787; }
+.syn-num  { color: #f0883e; }
+.syn-tpl  { color: #a5d6ff; }
+.syn-punc { color: #8b949e; }
+
+/* ─── Simulator ────────────────────────────────────── */
+.simulator {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.sim-toolbar {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.sim-toolbar select {
+  padding: 0.45rem 0.7rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+  min-width: 140px;
+}
+
+.sim-toolbar select:focus { border-color: var(--border-focus); }
+
+.sim-toolbar input {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.45rem 0.7rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.sim-toolbar input:focus { border-color: var(--border-focus); }
+.sim-toolbar input::placeholder { color: var(--text-muted); }
+
+.btn-send {
+  padding: 0.45rem 1.2rem;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+
+.btn-send:hover { background: var(--accent); }
+.btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.sim-console {
+  padding: 1rem;
+  max-height: 480px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.sim-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.sim-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sim-msg {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+}
+
+.sim-msg.incoming {
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--accent);
+}
+
+.sim-msg.normalized {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+.sim-msg.reply {
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--green);
+}
+
+.sim-msg-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.3rem;
+}
+
+.sim-msg-label.in-label   { color: var(--accent); }
+.sim-msg-label.nm-label   { color: var(--orange); }
+.sim-msg-label.out-label  { color: var(--green); }
+
+.sim-reply-area {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1rem 0.8rem;
+}
+
+.sim-reply-area input {
+  flex: 1;
+  padding: 0.45rem 0.7rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.sim-reply-area input:focus { border-color: var(--border-focus); }
+.sim-reply-area input::placeholder { color: var(--text-muted); }
+
+.btn-reply {
+  padding: 0.45rem 1rem;
+  background: var(--green-dim);
+  border: 1px solid var(--green);
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+
+.btn-reply:hover { background: var(--green); }
+.btn-reply:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Footer ───────────────────────────────────────── */
+footer {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* ─── Responsive ───────────────────────────────────── */
+@media (max-width: 680px) {
+  html { font-size: 14px; }
+  .app { padding: 1.2rem 1rem 3rem; }
+  header h1 { font-size: 1.4rem; }
+  .channels-grid { grid-template-columns: 1fr; }
+  .field-row { grid-template-columns: 1fr; }
+  .sim-toolbar { flex-direction: column; }
+  .sim-toolbar select { min-width: 100%; }
+}
+
+/* ─── Scrollbar ────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ─── Setup Guide Links ───────────────────────────── */
+.setup-guide-link {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 0.15rem;
+  transition: color 0.2s;
+}
+
+.setup-guide-link:hover {
+  text-decoration: underline;
+  color: var(--cyan);
+}
+
+/* ─── Test Connection Button ──────────────────────── */
+.btn-test-conn {
+  display: none;
+  margin-top: 0.6rem;
+  padding: 0.35rem 0.8rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.2s;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+}
+
+.btn-test-conn:hover { border-color: var(--accent); color: var(--text-primary); }
+.btn-test-conn.visible { display: inline-flex; }
+
+.test-result {
+  font-size: 0.78rem;
+  margin-top: 0.4rem;
+  display: none;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.test-result.visible { display: flex; }
+.test-result.success { color: var(--green); }
+.test-result.failure { color: var(--red); }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* ─── Quick Start Wizard ──────────────────────────── */
+.quick-start {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 2.5rem;
+  overflow: hidden;
+}
+
+.quick-start.collapsed .quick-start-body { display: none; }
+
+.quick-start-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.quick-start.collapsed .quick-start-header { border-bottom: none; }
+
+.quick-start-header h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.quick-start-toggle {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.6rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+
+.quick-start-toggle:hover { border-color: var(--accent); color: var(--text-primary); }
+
+.quick-start-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.qs-step {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.qs-step-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qs-step-text {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  padding-top: 0.15rem;
+}
+
+.qs-step-text .qs-hint {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 0.15rem;
+}
+
+.qs-step-text .qs-arrow {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+/* ─── Run with Node Section ───────────────────────── */
+.run-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.run-section .run-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+}
+
+.run-section .run-toolbar span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.run-block {
+  padding: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  white-space: pre;
+  color: var(--text-primary);
+  overflow-x: auto;
+}
+
+/* ─── Animations ───────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.sim-entry { animation: fadeIn 0.25s ease; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Header ──────────────────────────────────── -->
+  <header>
+    <h1>@omnichannel/gateway</h1>
+    <p>Configure your channels, preview the code, simulate messages</p>
+    <span class="version-badge">v0.1.0</span>
+  </header>
+
+  <!-- ── Quick Start Wizard ────────────────────────── -->
+  <div class="quick-start" id="quickStart">
+    <div class="quick-start-header" onclick="toggleQuickStart()">
+      <h2>Quick Start -- 3 Steps</h2>
+      <button class="quick-start-toggle" id="qsToggleBtn">Got it, hide this</button>
+    </div>
+    <div class="quick-start-body">
+      <div class="qs-step">
+        <span class="qs-step-num">1</span>
+        <div class="qs-step-text">
+          Pick your channels
+          <span class="qs-arrow">&#8595; see the channel cards below</span>
+        </div>
+      </div>
+      <div class="qs-step">
+        <span class="qs-step-num">2</span>
+        <div class="qs-step-text">
+          Enter your credentials
+          <span class="qs-hint">You'll need API tokens from each platform -- see the setup links on each card</span>
+        </div>
+      </div>
+      <div class="qs-step">
+        <span class="qs-step-num">3</span>
+        <div class="qs-step-text">
+          Copy the code and run
+          <span class="qs-arrow">&#8595; see the generated code and run instructions below</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Channel Config ──────────────────────────── -->
+  <section>
+    <h2><span class="section-icon">1</span> Enable &amp; Configure Channels</h2>
+    <div class="channels-grid" id="channelsGrid"></div>
+  </section>
+
+  <!-- ── Generated Code ──────────────────────────── -->
+  <section>
+    <h2><span class="section-icon">2</span> Generated Code</h2>
+    <div class="code-section">
+      <div class="code-toolbar">
+        <span>gateway.js</span>
+        <button class="btn-copy" id="btnCopy" onclick="copyCode()">Copy Code</button>
+      </div>
+      <div class="code-block" id="codeBlock"></div>
+    </div>
+  </section>
+
+  <!-- ── Run with Node.js ─────────────────────────── -->
+  <section>
+    <h2><span class="section-icon">&#9654;</span> Run with Node.js</h2>
+    <div class="run-section">
+      <div class="run-toolbar">
+        <span>terminal</span>
+      </div>
+      <div class="run-block" id="runBlock"><span class="syn-cmt"># Enable a channel above to see run instructions</span></div>
+    </div>
+  </section>
+
+  <!-- ── Message Simulator ───────────────────────── -->
+  <section>
+    <h2><span class="section-icon">3</span> Message Simulator</h2>
+    <div class="simulator">
+      <div class="sim-toolbar">
+        <select id="simChannel">
+          <option value="" disabled selected>Select channel</option>
+        </select>
+        <input type="text" id="simInput" placeholder="Type an incoming message..." />
+        <button class="btn-send" id="btnSend" onclick="simulateMessage()">Send</button>
+      </div>
+      <div class="sim-console" id="simConsole">
+        <div class="sim-empty">Enable a channel above, then send a simulated message.</div>
+      </div>
+      <div class="sim-reply-area">
+        <input type="text" id="simReply" placeholder="Type a reply (msg.reply)..." />
+        <button class="btn-reply" id="btnReply" onclick="simulateReply()" disabled>Reply</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Built for <a href="#">@omnichannel/gateway</a> &mdash; zero-dependency unified messaging SDK
+  </footer>
+</div>
+
+<script>
+// ── Channel Definitions ──────────────────────────────
+const CHANNEL_DEFS = [
+  {
+    id: 'telegram',
+    name: 'Telegram',
+    icon: '\u{1F4F1}',
+    setupGuide: { url: 'https://core.telegram.org/bots#botfather', text: 'Get token from @BotFather' },
+    npmDep: 'node-telegram-bot-api',
+    fields: [
+      { key: 'token', label: 'Bot Token', placeholder: '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11' }
+    ]
+  },
+  {
+    id: 'slack',
+    name: 'Slack',
+    icon: '\u{1F4AC}',
+    setupGuide: { url: 'https://api.slack.com/apps', text: 'Create app at api.slack.com' },
+    npmDep: '@slack/bolt',
+    fields: [
+      { key: 'token', label: 'Bot Token', placeholder: 'xoxb-...' },
+      { key: 'appToken', label: 'App Token', placeholder: 'xapp-...' }
+    ]
+  },
+  {
+    id: 'email',
+    name: 'Email',
+    icon: '\u{1F4E7}',
+    setupGuide: { url: null, text: 'Enable App Password at Google Account settings' },
+    npmDep: 'nodemailer imap',
+    fields: [
+      { key: 'imap.host', label: 'IMAP Host', placeholder: 'imap.gmail.com', row: 1 },
+      { key: 'imap.port', label: 'IMAP Port', placeholder: '993', row: 1 },
+      { key: 'imap.user', label: 'IMAP User', placeholder: 'you@example.com', row: 2 },
+      { key: 'imap.pass', label: 'IMAP Password', placeholder: 'app-password', type: 'password', row: 2 },
+      { key: 'smtp.host', label: 'SMTP Host', placeholder: 'smtp.gmail.com', row: 3 },
+      { key: 'smtp.port', label: 'SMTP Port', placeholder: '587', row: 3 },
+      { key: 'smtp.user', label: 'SMTP User', placeholder: 'you@example.com', row: 4 },
+      { key: 'smtp.pass', label: 'SMTP Password', placeholder: 'app-password', type: 'password', row: 4 }
+    ]
+  },
+  {
+    id: 'sms',
+    name: 'SMS',
+    icon: '\u{1F4F2}',
+    setupGuide: { url: 'https://www.twilio.com/console', text: 'Get credentials from Twilio Console' },
+    npmDep: 'twilio',
+    fields: [
+      { key: 'accountSid', label: 'Account SID', placeholder: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
+      { key: 'authToken', label: 'Auth Token', placeholder: 'your_auth_token' },
+      { key: 'fromNumber', label: 'From Number', placeholder: '+15551234567' }
+    ]
+  },
+  {
+    id: 'discord',
+    name: 'Discord',
+    icon: '\u{1F3AE}',
+    setupGuide: { url: 'https://discord.com/developers/applications', text: 'Create app at Discord Developer Portal' },
+    npmDep: 'discord.js',
+    fields: [
+      { key: 'token', label: 'Bot Token', placeholder: 'MTAxNTI0...' }
+    ]
+  }
+];
+
+// ── State ────────────────────────────────────────────
+const state = {
+  channels: {},   // { telegram: { enabled, values: { token: '...' } } }
+  lastMsg: null   // last NormalizedMessage for reply
+};
+
+CHANNEL_DEFS.forEach(ch => {
+  state.channels[ch.id] = { enabled: false, values: {} };
+  ch.fields.forEach(f => { state.channels[ch.id].values[f.key] = ''; });
+});
+
+// ── Render Channel Cards ─────────────────────────────
+function renderChannels() {
+  const grid = document.getElementById('channelsGrid');
+  grid.innerHTML = '';
+
+  CHANNEL_DEFS.forEach(ch => {
+    const data = state.channels[ch.id];
+    const hasCredentials = ch.fields.every(f => data.values[f.key].trim() !== '');
+    const card = document.createElement('div');
+    card.className = 'channel-card' + (data.enabled ? ' active' : '');
+
+    // ── Header with setup guide link
+    const guideLink = ch.setupGuide.url
+      ? `<a class="setup-guide-link" href="${ch.setupGuide.url}" target="_blank" rel="noopener">${escapeHtml(ch.setupGuide.text)} &#8599;</a>`
+      : `<span class="setup-guide-link" style="cursor:default">${escapeHtml(ch.setupGuide.text)}</span>`;
+
+    let html = `
+      <div class="channel-header">
+        <div class="channel-info">
+          <span class="channel-icon">${ch.icon}</span>
+          <div>
+            <span class="channel-name">${ch.name}</span>
+            <div>${guideLink}</div>
+          </div>
+          <span class="status-dot ${data.enabled && hasCredentials ? 'connected' : ''}"></span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" ${data.enabled ? 'checked' : ''} data-channel="${ch.id}" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    `;
+
+    // ── Fields
+    html += '<div class="channel-fields">';
+
+    // Group fields by row
+    const rows = {};
+    ch.fields.forEach(f => {
+      const row = f.row || 'solo_' + f.key;
+      if (!rows[row]) rows[row] = [];
+      rows[row].push(f);
+    });
+
+    Object.values(rows).forEach(group => {
+      if (group.length === 2) {
+        html += '<div class="field-row">';
+        group.forEach(f => {
+          html += `
+            <div class="field-group">
+              <label>${f.label}</label>
+              <input type="${f.type || 'text'}" placeholder="${f.placeholder}"
+                     data-channel="${ch.id}" data-field="${f.key}"
+                     value="${escapeAttr(data.values[f.key])}" />
+            </div>
+          `;
+        });
+        html += '</div>';
+      } else {
+        group.forEach(f => {
+          html += `
+            <div class="field-group">
+              <label>${f.label}</label>
+              <input type="${f.type || 'text'}" placeholder="${f.placeholder}"
+                     data-channel="${ch.id}" data-field="${f.key}"
+                     value="${escapeAttr(data.values[f.key])}" />
+            </div>
+          `;
+        });
+      }
+    });
+
+    // ── Test Connection Button
+    html += `
+      <button class="btn-test-conn ${data.enabled && hasCredentials ? 'visible' : ''}" data-channel="${ch.id}" onclick="testConnection('${ch.id}')">
+        Test Connection
+      </button>
+      <div class="test-result" id="testResult-${ch.id}"></div>
+    `;
+
+    html += '</div>';
+    card.innerHTML = html;
+    grid.appendChild(card);
+  });
+
+  // Attach listeners
+  grid.querySelectorAll('input[type="checkbox"]').forEach(el => {
+    el.addEventListener('change', (e) => {
+      state.channels[e.target.dataset.channel].enabled = e.target.checked;
+      renderChannels();
+      updateCode();
+      updateSimSelector();
+      updateRunBlock();
+    });
+  });
+
+  grid.querySelectorAll('input[data-field]').forEach(el => {
+    el.addEventListener('input', (e) => {
+      state.channels[e.target.dataset.channel].values[e.target.dataset.field] = e.target.value;
+      updateStatusDots();
+      updateTestButtonVisibility();
+      updateCode();
+      updateRunBlock();
+    });
+  });
+}
+
+function updateStatusDots() {
+  document.querySelectorAll('.channel-card').forEach((card, i) => {
+    const ch = CHANNEL_DEFS[i];
+    const data = state.channels[ch.id];
+    const dot = card.querySelector('.status-dot');
+    const hasCreds = data.enabled && ch.fields.every(f => data.values[f.key].trim() !== '');
+    dot.classList.toggle('connected', hasCreds);
+  });
+}
+
+function updateTestButtonVisibility() {
+  CHANNEL_DEFS.forEach(ch => {
+    const data = state.channels[ch.id];
+    const hasCreds = data.enabled && ch.fields.every(f => data.values[f.key].trim() !== '');
+    const btn = document.querySelector(`.btn-test-conn[data-channel="${ch.id}"]`);
+    if (btn) btn.classList.toggle('visible', hasCreds);
+  });
+}
+
+function testConnection(channelId) {
+  const btn = document.querySelector(`.btn-test-conn[data-channel="${channelId}"]`);
+  const resultEl = document.getElementById('testResult-' + channelId);
+
+  // Show spinner state
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Testing...';
+  resultEl.className = 'test-result';
+  resultEl.style.display = 'none';
+  resultEl.textContent = '';
+
+  setTimeout(() => {
+    const success = Math.random() < 0.8;
+    btn.disabled = false;
+    btn.textContent = 'Test Connection';
+
+    resultEl.className = 'test-result visible ' + (success ? 'success' : 'failure');
+    resultEl.style.display = 'flex';
+    resultEl.innerHTML = success
+      ? '&#10003; Connected successfully'
+      : '&#10007; Connection failed -- check credentials';
+  }, 1500);
+}
+
+// ── Quick Start Wizard ──────────────────────────────
+function toggleQuickStart() {
+  const el = document.getElementById('quickStart');
+  const isCollapsed = el.classList.toggle('collapsed');
+  const btn = document.getElementById('qsToggleBtn');
+  btn.textContent = isCollapsed ? 'Show quick start' : 'Got it, hide this';
+  localStorage.setItem('qs-collapsed', isCollapsed ? '1' : '');
+}
+
+function initQuickStart() {
+  if (localStorage.getItem('qs-collapsed') === '1') {
+    const el = document.getElementById('quickStart');
+    el.classList.add('collapsed');
+    document.getElementById('qsToggleBtn').textContent = 'Show quick start';
+  }
+}
+
+// ── Run with Node.js Block ──────────────────────────
+function updateRunBlock() {
+  const el = document.getElementById('runBlock');
+  const enabledChannels = CHANNEL_DEFS.filter(ch => state.channels[ch.id].enabled);
+
+  if (enabledChannels.length === 0) {
+    el.innerHTML = '<span class="syn-cmt"># Enable a channel above to see run instructions</span>';
+    return;
+  }
+
+  const deps = enabledChannels.map(ch => ch.npmDep).join(' ');
+  el.innerHTML =
+    '<span class="syn-cmt"># Save the generated code to bot.js, then:</span>\n' +
+    'npm install @omnichannel/gateway ' + escapeHtml(deps) + '\n' +
+    'node bot.js';
+}
+
+function escapeAttr(s) {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+// ── Code Generator ───────────────────────────────────
+function generateRawCode() {
+  const enabledChannels = CHANNEL_DEFS.filter(ch => state.channels[ch.id].enabled);
+
+  if (enabledChannels.length === 0) {
+    return `import { Gateway } from '@omnichannel/gateway'\n\n// Enable a channel above to see the configuration code`;
+  }
+
+  let configLines = [];
+
+  enabledChannels.forEach(ch => {
+    const data = state.channels[ch.id];
+    const entries = [];
+
+    ch.fields.forEach(f => {
+      const val = data.values[f.key].trim() || placeholderFor(ch.id, f.key);
+      // Handle nested keys like imap.host
+      if (f.key.includes('.')) {
+        // Will be handled at group level
+        return;
+      }
+      entries.push(`    ${f.key}: '${val}'`);
+    });
+
+    // Handle nested objects (email imap/smtp)
+    if (ch.id === 'email') {
+      const imap = {};
+      const smtp = {};
+      ch.fields.forEach(f => {
+        const val = data.values[f.key].trim() || placeholderFor(ch.id, f.key);
+        if (f.key.startsWith('imap.')) imap[f.key.split('.')[1]] = val;
+        if (f.key.startsWith('smtp.')) smtp[f.key.split('.')[1]] = val;
+      });
+      configLines.push(`  email: {`);
+      configLines.push(`    imap: { host: '${imap.host}', port: ${imap.port || 993}, user: '${imap.user}', pass: '${imap.pass}' },`);
+      configLines.push(`    smtp: { host: '${smtp.host}', port: ${smtp.port || 587}, user: '${smtp.user}', pass: '${smtp.pass}' },`);
+      configLines.push(`  },`);
+    } else {
+      configLines.push(`  ${ch.id}: {`);
+      entries.forEach((e, i) => {
+        configLines.push(e + (i < entries.length - 1 ? ',' : ','));
+      });
+      configLines.push(`  },`);
+    }
+  });
+
+  const configBlock = configLines.join('\n');
+
+  return `import { Gateway } from '@omnichannel/gateway'
+
+const gw = new Gateway({
+${configBlock}
+})
+
+gw.on('message', async (msg) => {
+  console.log(\`[\${msg.channel}] \${msg.from.id}: \${msg.text}\`)
+  // Add your AI logic here
+  await msg.reply('Hello!')
+})
+
+await gw.start()`;
+}
+
+function placeholderFor(channel, key) {
+  const map = {
+    'telegram.token': 'YOUR_TELEGRAM_BOT_TOKEN',
+    'slack.token': 'xoxb-YOUR-TOKEN',
+    'slack.appToken': 'xapp-YOUR-APP-TOKEN',
+    'sms.accountSid': 'YOUR_ACCOUNT_SID',
+    'sms.authToken': 'YOUR_AUTH_TOKEN',
+    'sms.fromNumber': '+15551234567',
+    'discord.token': 'YOUR_DISCORD_BOT_TOKEN',
+    'email.imap.host': 'imap.gmail.com',
+    'email.imap.port': '993',
+    'email.imap.user': 'you@example.com',
+    'email.imap.pass': 'YOUR_PASSWORD',
+    'email.smtp.host': 'smtp.gmail.com',
+    'email.smtp.port': '587',
+    'email.smtp.user': 'you@example.com',
+    'email.smtp.pass': 'YOUR_PASSWORD',
+  };
+  return map[`${channel}.${key}`] || 'YOUR_VALUE';
+}
+
+function updateCode() {
+  const raw = generateRawCode();
+  document.getElementById('codeBlock').innerHTML = highlightSyntax(raw);
+}
+
+// ── Syntax Highlighting ──────────────────────────────
+function highlightSyntax(code) {
+  // Escape HTML first
+  let html = code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Order matters: comments first, then strings/templates, then keywords, etc.
+
+  // Single-line comments
+  html = html.replace(/(\/\/.*)/g, '<span class="syn-cmt">$1</span>');
+
+  // Template literals: `...${...}...`
+  html = html.replace(/(`[^`]*`)/g, (match) => {
+    // Highlight interpolations inside
+    const inner = match.replace(/(\$\{[^}]+\})/g, '<span class="syn-obj">$1</span>');
+    return '<span class="syn-tpl">' + inner + '</span>';
+  });
+
+  // Single-quoted strings
+  html = html.replace(/'([^']*)'/g, '<span class="syn-str">\'$1\'</span>');
+
+  // Keywords
+  html = html.replace(/\b(import|export|from|const|let|var|async|await|new|function|return|if|else)\b/g,
+    '<span class="syn-kw">$1</span>');
+
+  // Numbers (standalone)
+  html = html.replace(/\b(\d+)\b/g, '<span class="syn-num">$1</span>');
+
+  // Object keys (word followed by colon)
+  html = html.replace(/(\w+)(\s*:)/g, '<span class="syn-prop">$1</span>$2');
+
+  // Known constructors and objects
+  html = html.replace(/\b(Gateway|console)\b/g, '<span class="syn-obj">$1</span>');
+
+  // Method names after dot
+  html = html.replace(/\.(\w+)\s*\(/g, '.<span class="syn-fn">$1</span>(');
+
+  return html;
+}
+
+// ── Copy Code ────────────────────────────────────────
+function copyCode() {
+  const raw = generateRawCode();
+  navigator.clipboard.writeText(raw).then(() => {
+    const btn = document.getElementById('btnCopy');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy Code';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ── Simulator ────────────────────────────────────────
+function updateSimSelector() {
+  const select = document.getElementById('simChannel');
+  const enabled = CHANNEL_DEFS.filter(ch => state.channels[ch.id].enabled);
+  const currentVal = select.value;
+
+  select.innerHTML = '<option value="" disabled>Select channel</option>';
+  enabled.forEach(ch => {
+    const opt = document.createElement('option');
+    opt.value = ch.id;
+    opt.textContent = `${ch.icon} ${ch.name}`;
+    select.appendChild(opt);
+  });
+
+  // Restore selection if still valid
+  if (enabled.some(ch => ch.id === currentVal)) {
+    select.value = currentVal;
+  } else if (enabled.length === 1) {
+    select.value = enabled[0].id;
+  }
+}
+
+function generateUUID() {
+  // Simple v4-like UUID for display
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+let messageCounter = 0;
+
+function simulateMessage() {
+  const channel = document.getElementById('simChannel').value;
+  const text = document.getElementById('simInput').value.trim();
+  if (!channel || !text) return;
+
+  messageCounter++;
+  const consoleEl = document.getElementById('simConsole');
+
+  // Remove empty state
+  const empty = consoleEl.querySelector('.sim-empty');
+  if (empty) empty.remove();
+
+  const chDef = CHANNEL_DEFS.find(c => c.id === channel);
+  const data = state.channels[channel];
+  const now = new Date();
+
+  // Build a realistic chatId (random large number)
+  const chatId = String(Math.floor(Math.random() * 900000000) + 100000000);
+
+  // Build raw field from entered credentials (masked)
+  let rawField = null;
+  if (channel === 'telegram' && data.values.token) {
+    const tok = data.values.token;
+    const masked = tok.length > 5 ? tok.substring(0, 5) + '...' : tok;
+    rawField = { update_id: Math.floor(Math.random() * 900000) + 100000, message: { from: { first_name: 'Demo User' }, chat: { id: parseInt(chatId) }, text: text }, _token_hint: masked };
+  } else if (channel === 'slack' && data.values.token) {
+    const tok = data.values.token;
+    const masked = tok.length > 5 ? tok.substring(0, 5) + '...' : tok;
+    rawField = { type: 'message', channel: 'C0' + chatId.substring(0, 7), user: 'U0' + chatId.substring(0, 7), text: text, _token_hint: masked };
+  } else if (channel === 'discord' && data.values.token) {
+    const tok = data.values.token;
+    const masked = tok.length > 5 ? tok.substring(0, 5) + '...' : tok;
+    rawField = { id: chatId, content: text, author: { username: 'DemoUser', discriminator: '0001' }, _token_hint: masked };
+  } else if (channel === 'email') {
+    rawField = { from: data.values['imap.user'] || 'user@example.com', subject: 'Re: Demo', text: text };
+  } else if (channel === 'sms' && data.values.fromNumber) {
+    rawField = { From: data.values.fromNumber, Body: text, AccountSid: data.values.accountSid ? data.values.accountSid.substring(0, 5) + '...' : 'AC...' };
+  }
+
+  // Build NormalizedMessage
+  const normalizedMsg = {
+    id: generateUUID(),
+    channel: channel,
+    chatId: chatId,
+    from: {
+      id: 'user_' + (100 + messageCounter),
+      name: 'Demo User'
+    },
+    text: text,
+    type: 'text',
+    timestamp: now.toISOString(),
+    raw: rawField
+  };
+
+  state.lastMsg = normalizedMsg;
+
+  // Render entry
+  const entry = document.createElement('div');
+  entry.className = 'sim-entry';
+  entry.innerHTML = `
+    <div class="sim-msg incoming">
+      <div class="sim-msg-label in-label">${chDef.icon} Incoming &mdash; ${chDef.name}</div>
+      ${escapeHtml(text)}
+    </div>
+    <div class="sim-msg normalized">
+      <div class="sim-msg-label nm-label">NormalizedMessage</div>${syntaxHighlightJSON(normalizedMsg)}</div>
+  `;
+
+  consoleEl.appendChild(entry);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+
+  // Clear input
+  document.getElementById('simInput').value = '';
+
+  // Enable reply
+  document.getElementById('btnReply').disabled = false;
+  document.getElementById('simReply').focus();
+}
+
+function simulateReply() {
+  const replyText = document.getElementById('simReply').value.trim();
+  if (!replyText || !state.lastMsg) return;
+
+  const consoleEl = document.getElementById('simConsole');
+  const chDef = CHANNEL_DEFS.find(c => c.id === state.lastMsg.channel);
+
+  const entry = document.createElement('div');
+  entry.className = 'sim-entry';
+  entry.innerHTML = `
+    <div class="sim-msg reply">
+      <div class="sim-msg-label out-label">${chDef.icon} msg.reply() &rarr; ${chDef.name}</div>
+      <strong>To ${state.lastMsg.chatId}:</strong> ${escapeHtml(replyText)}
+    </div>
+  `;
+
+  consoleEl.appendChild(entry);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+
+  document.getElementById('simReply').value = '';
+  document.getElementById('btnReply').disabled = true;
+}
+
+function syntaxHighlightJSON(obj) {
+  const json = JSON.stringify(obj, null, 2);
+  return json
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    // Keys
+    .replace(/"(\w+)"(\s*:)/g, '<span class="syn-prop">"$1"</span>$2')
+    // String values
+    .replace(/:\s*"([^"]*)"/g, ': <span class="syn-str">"$1"</span>')
+    // Numbers
+    .replace(/:\s*(\d+)/g, ': <span class="syn-num">$1</span>')
+    // null
+    .replace(/:\s*(null)\b/g, ': <span class="syn-kw">$1</span>');
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Keyboard Shortcuts ───────────────────────────────
+document.getElementById('simInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') simulateMessage();
+});
+
+document.getElementById('simReply').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') simulateReply();
+});
+
+// ── Init ─────────────────────────────────────────────
+initQuickStart();
+renderChannels();
+updateCode();
+updateSimSelector();
+updateRunBlock();
+</script>
+</body>
+</html>
